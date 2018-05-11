@@ -1,14 +1,16 @@
 #!/bin/ksh
-#	edwords - view or edit a 'words' encrypted file
-##############################################################################
+#	edwords - view or edit an encrypted 'words' file
+################################################################################
 unset	LADM LETC SUDO NAWK WAMI HOST MAILX UALS SUBJECT LGRP
-if [ ! -r /opt/edwords/etc/xtools.cfg ]; then echo "Missing xtools.cfg" >&2; exit 2; fi
-	. /opt/edwords/etc/xtools.cfg 
+if [ ! -r /opt/edwords/etc/xtools.cfg ]; then 
+  echo "Missing xtools.cfg" >&2 
+  exit 2
+fi
+. /opt/edwords/etc/xtools.cfg 
 
 unset	SCRP LSDT WDIR LOGF MAIL BKOT 
 	SCRP="${0##*/}"
-	LSDT="-Ee%Y%m%d.%H%M"
-	WDIR=/var/local/.words	        # Establish words directory
+	WDIR=/opt/edwords/etc # Establish words directory
 unset	READ OPTS OPTX OPTN NAME FILE LOCK UNLOCK
 	READ=default			# Default is to read words
 	OPTS=-read			# pre-set for sudo re-invocation
@@ -16,7 +18,9 @@ unset	ALERT TRAP VIEW VIXX EDIT SUMR
 	ALERT=""			# Default update notification
 	SUMR="/usr/bin/sum -r"
 if [ ! -x "$MAILX" ]; then	print "missing mailx" >&2;	exit 2;	fi
-#############################################################################
+
+###############################################################################
+
 function clear_screen	# clear the screen
 {	/usr/bin/tput -S <<!EOFT
 cup 0 0
@@ -45,8 +49,10 @@ if [ -n "$1" ]; then
 else								exit 2
 fi
 }
+
 ##############################################################################
-#			# parse any options
+
+# parse any options
 while [ -n "$1" -a -z "${1##*-*}" ]; do
 	OPTN="${1#-*}";
   case "$OPTN" in
@@ -70,48 +76,50 @@ if [ ! -d "$WDIR" ]; then er_exit "$WDIR not found";		exit 1;	fi
 if [ -z "$WAMI" ]; then	  er_exit "missing whoami";		exit 1;	fi
 
 case "$HOST" in
-(dispatch)	VIEW="/bin/view -x";		VIXX="/bin/vi -x"	;;
-(admin4)	VIEW="/usr/bin/rvim -x -M";	VIXX="/usr/bin/rvim -x"	;;
-(*)				er_exit "do not know $HOST";	exit 1	;;
+  (admin1) VIEW="/usr/bin/rvim -x -M"; VIXX="/usr/bin/rvim -x" ;;
+  (*) er_exit "do not know $HOST"; exit 1 ;;
 esac
-if [ -z "$READ" ]; then	EDIT="$VIXX";	else	EDIT="$VIEW";		fi
+
+if [ -z "$READ" ]; then EDIT="$VIXX"; else EDIT="$VIEW"; fi
 
 case "$WAMI" in
-(root)									;;
-(*)
-# if [ -z "$READ" ]; then		# only use sudo for write, NOT... need g+w for log and file copy
-  	print	"$SCRP: Re-invoking with sudo...\n"
-	$SUDO $0 $OPTS $OPTX $1;		 exit $? 
-# fi	;;
+  (root) ;;
+  (*)
+    print "$SCRP: Re-invoking with sudo...\n"
+    $SUDO $0 $OPTS $OPTX $1
+    exit $? 
 esac
-	LOGF=$WDIR/log			# log of reads, writes, updates
-	MAIL=$WDIR/mail			# email notification list
-	BKOT=$WDIR/backout
-	touch	$LOGF
+
+LOGF=$WDIR/log			# log of reads, writes, updates
+MAIL=$WDIR/mail			# email notification list
+BKOT=$WDIR/.words/backout
+touch	$LOGF
 if [ 0 != $?  ]; then	er_exit "cannot write $LOGF";		exit 1;	fi
 
 if [ -n "$SUDO_USER" ]; then	WAMI="$SUDO_USER";
 elif [ -n "$LOGNAME" ]; then	WAMI="$LOGNAME";
 else			er_exit "do not know who I really am";	exit 1
 fi
+
 case "$1" in					# establish words name
 (*words*)	NAME=$1		;;		# as specfified
 (*)		NAME=.words.$1	;;		# pre-pend .words
 esac
-	FILE=$WDIR/$NAME			# Establish filename
+FILE=$WDIR/.words/$NAME                         # Establish filename
 if [ ! -f "$FILE" ]; then er_exit "not a file: $NAME";		exit 1;	fi
 if [ ! -w "$BKOT" ]; then er_exit "cannot write $BKOT";		exit 1;	fi
 
 if [ -n "$READ" ]; then
-	LOCK=$WDIR/$1.$WAMI	# Read-only (copy, don't lock)
-else	LOCK=$WDIR/$1.lock	# Establish lockname
-  if [ -f "$LOCK" ]; then er_exit "locked, `$UALS -o $LSDT $LOCK`"; exit 1; fi
+  LOCK=$WDIR/.words/$1.$WAMI	# Read-only (copy, don't lock)
+else
+  LOCK=$WDIR/.words/$1.lock	# Establish lockname
+  if [ -f "$LOCK" ]; then er_exit "locked, `ls -l $LOCK`"; exit 1; fi
 fi
-	/bin/cp -p	$FILE	$LOCK		# Create lock
+/bin/cp -p	$FILE	$LOCK		# Create lock
 if [ 0 != $? ]; then	er_exit	"cp $LOCK failed";		exit 1;	fi
-	UNLOCK="$LOCK"				# in case of errors
+UNLOCK="$LOCK"				# in case of errors
 
-	/bin/chown $WAMI:$LGRP	$LOCK		# Stamp lock
+/bin/chown $WAMI:$LGRP	$LOCK		# Stamp lock
 if [ 0 != $? ]; then	er_exit "cannot chown $LOCK";		exit 1;	fi
 #.............................................................................
 unset	ANS SUM1 SUM2 WAM8 ACC6
@@ -171,22 +179,18 @@ while [ -z "$ANS" ]; do
   esac
 done
 
-#set -x
-	/bin/cp		$LOCK	$FILE		# Make file production
-	STS=$?
-#set +x
-if [ 0 != $STS ]; then	er_exit	"cp $LOCK failed";		exit 1;	fi
+/bin/cp $LOCK $FILE # make file production
+STS=$?
+if [ 0 != $STS ]; then er_exit "cp $LOCK failed"; exit 1; fi
 
-	ACC6="UPDATE"			# Note update in log
-print	"`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE"	>>$LOGF
+ACC6="UPDATE" # note update in log
+print "`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE" >>$LOGF
 
-set	`$UALS $LSDT $FILE`		# 1:yyyymmdd.HHMM 2:filename
-
-#set -x
-	/bin/mv	$LOCK	$BKOT/$NAME.$1	# Make lock the backout copy
-	STS=$?
-#set +x
-if [ 0 != $STS ]; then	er_exit	"mv $BKOT/$NAME failed";	exit 1;	fi
+# 1:yyyymmdd.HHMM 2:filename
+set `ls -l --time-style="+%Y%m%d.%H%M" $FILE | awk '{print $6" "$7}'`
+mv $LOCK $BKOT/$NAME.$1 # make lock the backout copy
+STS=$?
+if [ 0 != $STS ]; then er_exit "mv $BKOT/$NAME failed"; exit 1; fi
 
 unset	FILE LOCK ADDR MAILSUB TEXT
 #

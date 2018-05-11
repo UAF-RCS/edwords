@@ -1,0 +1,10 @@
+# who to email change notifications to:
+#
+.words.academic:	uaf-rcs-oncall
+.words.misc:		uaf-rcs-oncall
+.words.acadstg:         uaf-rcs-oncall
+.words.rdbms:		uaf-rcs-oncall
+.words.consult:		uaf-rcs-oncall
+.words.linux:		uaf-rcs-oncall
+.words.windows_mac:	uaf-rcs-oncall
+.words.digdug:          uaf-rcs-oncall

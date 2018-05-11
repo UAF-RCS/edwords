@@ -1,7 +1,7 @@
 #!/bin/ksh
 #	edwords - view or edit an encrypted 'words' file
 ################################################################################
-unset	LADM LETC SUDO NAWK WAMI HOST MAILX UALS SUBJECT LGRP
+unset	LADM LETC SUDO NAWK WAMI HOST MAILX SUBJECT LGRP
 if [ ! -r /opt/edwords/etc/xtools.cfg ]; then 
   echo "Missing xtools.cfg" >&2 
   exit 2
@@ -71,7 +71,6 @@ done
 if [ -z "$1" ]; then	ex_usage;				exit 1;	fi
 if [ -n "$2" ]; then	ex_usage "Too many args";		exit 1;	fi
 
-if [ ! -e "$UALS" ]; then er_exit "missing uals";		exit 1;	fi
 if [ ! -d "$WDIR" ]; then er_exit "$WDIR not found";		exit 1;	fi
 if [ -z "$WAMI" ]; then	  er_exit "missing whoami";		exit 1;	fi
 

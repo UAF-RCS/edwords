@@ -1,2 +1,2 @@
 # edwords
-A utility to view or edit a 'words' encrypted file
+A utility to view or edit an encrypted 'words' file

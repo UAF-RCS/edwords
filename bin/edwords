@@ -1,7 +1,7 @@
 #!/bin/ksh
 #	edwords - view or edit an encrypted 'words' file
 ################################################################################
-unset	LADM LETC SUDO NAWK WAMI HOST MAILX SUBJECT LGRP
+unset SUDO NAWK WAMI HOST MAILX SUBJECT LGRP
 if [ ! -r /opt/edwords/etc/xtools.cfg ]; then 
   echo "Missing xtools.cfg" >&2 
   exit 2
@@ -30,6 +30,7 @@ unset	I
 integer	I=0
 while  [ 20 -gt I ]; do	I=$I+1; print "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"; done
 }
+
 #.............................................................................
 function er_exit	# show error message & exit
 {	clear_screen
@@ -40,6 +41,7 @@ if [ -n "$2" ]; then	exit $2
 else			exit  1
 fi
 }
+
 #.............................................................................
 function ex_usage	# show usage then exit
 {
@@ -54,25 +56,25 @@ fi
 
 # parse any options
 while [ -n "$1" -a -z "${1##*-*}" ]; do
-	OPTN="${1#-*}";
+  OPTN="${1#-*}";
   case "$OPTN" in
-  (w*|W*)	READ="";	EDIT="$VIXX";	OPTS="-write"		;;
-  (r*|R*)	READ=$OPTN;	EDIT="$VIEW";	OPTS="-read"		;;
-  (d*|D*)	shift 1	
-    if [ -z "$1" ]; then ex_usage "unspecified directory";	exit 1;	fi
-		WDIR="$1"		# non-default words directory
-		OPTX="-d $WDIR"
-	;;
-  (h*|H*|\?)	ex_usage;					exit 1	;;
-  (*)		ex_usage "Invalid option, -$OPTN";		exit 1	;;
+  (w*|W*) READ=""; EDIT="$VIXX"; OPTS="-write" ;;
+  (r*|R*) READ=$OPTN; EDIT="$VIEW"; OPTS="-read" ;;
+  (d*|D*) shift 1	
+    if [ -z "$1" ]; then ex_usage "unspecified directory"; exit 1; fi
+    WDIR="$1" # non-default words directory
+    OPTX="-d $WDIR"
+    ;;
+  (h*|H*|\?) ex_usage; exit 1 ;;
+  (*) ex_usage "Invalid option, -$OPTN"; exit 1 ;;
   esac
-	shift 1
+  shift 1
 done
-if [ -z "$1" ]; then	ex_usage;				exit 1;	fi
-if [ -n "$2" ]; then	ex_usage "Too many args";		exit 1;	fi
 
-if [ ! -d "$WDIR" ]; then er_exit "$WDIR not found";		exit 1;	fi
-if [ -z "$WAMI" ]; then	  er_exit "missing whoami";		exit 1;	fi
+if [ -z "$1" ]; then ex_usage; exit 1; fi
+if [ -n "$2" ]; then ex_usage "Too many args"; exit 1; fi
+if [ ! -d "$WDIR" ]; then er_exit "$WDIR not found"; exit 1; fi
+if [ -z "$WAMI" ]; then er_exit "missing whoami"; exit 1; fi
 
 case "$HOST" in
   (admin1) VIEW="/usr/bin/rvim -x -M"; VIXX="/usr/bin/rvim -x" ;;
@@ -89,138 +91,135 @@ case "$WAMI" in
     exit $? 
 esac
 
-LOGF=$WDIR/log			# log of reads, writes, updates
-MAIL=$WDIR/mail			# email notification list
-BKOT=$WDIR/.words/backout
-touch	$LOGF
-if [ 0 != $?  ]; then	er_exit "cannot write $LOGF";		exit 1;	fi
+MAIL=$WDIR/mail                 # email notification list
+BKOT=$WDIR/.words/backout       # keep backout copies
+LOGF=$WDIR/log                  # log of reads, writes, updates
+touch $LOGF
+if [ 0 != $? ]; then er_exit "cannot write $LOGF"; exit 1; fi
 
-if [ -n "$SUDO_USER" ]; then	WAMI="$SUDO_USER";
-elif [ -n "$LOGNAME" ]; then	WAMI="$LOGNAME";
-else			er_exit "do not know who I really am";	exit 1
+if [ -n "$SUDO_USER" ]; then WAMI="$SUDO_USER";
+elif [ -n "$LOGNAME" ]; then WAMI="$LOGNAME";
+else er_exit "do not know who I really am"; exit 1;
 fi
 
-case "$1" in					# establish words name
-(*words*)	NAME=$1		;;		# as specfified
-(*)		NAME=.words.$1	;;		# pre-pend .words
+case "$1" in                    # establish words name
+  (*words*) NAME=$1 ;;          # as specfified
+  (*) NAME=.words.$1 ;;         # pre-pend .words
 esac
-FILE=$WDIR/.words/$NAME                         # Establish filename
-if [ ! -f "$FILE" ]; then er_exit "not a file: $NAME";		exit 1;	fi
-if [ ! -w "$BKOT" ]; then er_exit "cannot write $BKOT";		exit 1;	fi
+FILE=$WDIR/.words/$NAME         # establish filename
+if [ ! -f "$FILE" ]; then er_exit "not a file: $NAME"; exit 1; fi
+if [ ! -w "$BKOT" ]; then er_exit "cannot write $BKOT"; exit 1; fi
 
 if [ -n "$READ" ]; then
-  LOCK=$WDIR/.words/$1.$WAMI	# Read-only (copy, don't lock)
+  LOCK=$WDIR/.words/$1.$WAMI    # read-only (copy, don't lock)
 else
-  LOCK=$WDIR/.words/$1.lock	# Establish lockname
+  LOCK=$WDIR/.words/$1.lock     # establish lockname
   if [ -f "$LOCK" ]; then er_exit "locked, `ls -l $LOCK`"; exit 1; fi
 fi
-/bin/cp -p	$FILE	$LOCK		# Create lock
-if [ 0 != $? ]; then	er_exit	"cp $LOCK failed";		exit 1;	fi
-UNLOCK="$LOCK"				# in case of errors
+/bin/cp -p $FILE $LOCK          # create lock
+if [ 0 != $? ]; then er_exit "cp $LOCK failed"; exit 1; fi
+UNLOCK="$LOCK"                  # in case of errors
 
-/bin/chown $WAMI:$LGRP	$LOCK		# Stamp lock
-if [ 0 != $? ]; then	er_exit "cannot chown $LOCK";		exit 1;	fi
-#.............................................................................
-unset	ANS SUM1 SUM2 WAM8 ACC6
+/bin/chown $WAMI:$LGRP $LOCK    # stamp lock
+if [ 0 != $? ]; then er_exit "cannot chown $LOCK"; exit 1; fi
+
+unset ANS SUM1 SUM2 WAM8 ACC6
 typeset -L8 WAM8
 typeset -L6 ACC6
-	WAM8="$WAMI"
-	ACC6="$OPTS"				# Note read in log
-print	"`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE"	>>$LOGF
-if [ 0 != $? ]; then	er_exit "log $LOGF failed";		exit 1;	fi
+WAM8="$WAMI"
+ACC6="$OPTS"                    # note read in log
+print "`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE" >>$LOGF
+if [ 0 != $? ]; then er_exit "log $LOGF failed"; exit 1; fi
 
-trap	"TRAP=Error; er_exit" 1 2 3
+trap "TRAP=Error; er_exit" 1 2 3
 
-	$EDIT	$LOCK		# Edit (do the lock... a copy)
+$EDIT $LOCK                     # edit (do the lock... a copy)
 
-	SUM1="`$SUMR $FILE | $NAWK '{print $1}'`"
-	SUM2="`$SUMR $LOCK | $NAWK '{print $1}'`"
+SUM1="`$SUMR $FILE | $NAWK '{print $1}'`"
+SUM2="`$SUMR $LOCK | $NAWK '{print $1}'`"
 if [ "$SUM1" = "$SUM2" ]; then er_exit "$NAME not changed" 0;	exit 0;	fi
 
-if [ -n "$READ" ]; then		# Read requested, skip the update
-	er_exit "read requested, changes abandoned\n";		exit 1
+if [ -n "$READ" ]; then         # read requested, skip the update
+  er_exit "read requested, changes abandoned\n"
+  exit 1
 fi
 
-unset	ANS			# Require a valid answer
-
+unset ANS                       # require a valid answer
 while [ -z "$ANS" ]; do
-	print "$SCRP: Make this the production file? [y|n] \c"
- 	read ANS
-	print ""
+  print "$SCRP: Make this the production file? [y|n] \c"
+  read ANS
+  print ""
   case "$ANS" in
-  (y*|Y*)
-	print "$SCRP: invoking with 'view -x' to validate encryption key\n"
-	/bin/cp	-p	$LOCK	$LOCK.v
-    if [ 0 != $? ]; then	er_exit	"cp $LOCK.v failed";	exit 1;	fi
-	$VIEW	$LOCK		# Validate encryption key OK
-	SUM1="`$SUMR $LOCK.v | $NAWK '{print $1}'`"
-	SUM2="`$SUMR $LOCK   | $NAWK '{print $1}'`"
-    if [ "$SUM1" != "$SUM2" ]; then
-	print "$SCRP: validation changed file...\n";	ANS=""
-    fi
-	/bin/rm -f	$LOCK.v
-	;;
-  (n*|N*)
-	er_exit "abandoning changes" 0;				exit 0;
-	;;
-  (*)	print "$SCRP: Invalid response: $ANS\n";	ANS=""
-	;;
+    (y*|Y*)
+      print "$SCRP: invoking with 'view -x' to validate encryption key\n"
+      /bin/cp -p $LOCK $LOCK.v
+      if [ 0 != $? ]; then er_exit "cp $LOCK.v failed"; exit 1; fi
+      $VIEW $LOCK               # validate encryption key OK
+      SUM1="`$SUMR $LOCK.v | $NAWK '{print $1}'`"
+      SUM2="`$SUMR $LOCK   | $NAWK '{print $1}'`"
+      if [ "$SUM1" != "$SUM2" ]; then
+        print "$SCRP: validation changed file...\n"
+        ANS=""
+      fi
+      /bin/rm -f $LOCK.v
+      ;;
+    (n*|N*)  er_exit "abandoning changes" 0; exit 0 ;;
+    (*)	 print "$SCRP: Invalid response: $ANS\n"; ANS="" ;;
   esac
 done
 
-unset	ANS			# Make sure they really want to do this
+unset	ANS                     # make sure they really want to do this
 while [ -z "$ANS" ]; do
-	print "$SCRP: Update $NAME? [y|n] \c";	read ANS
+  print "$SCRP: Update $NAME? [y|n] \c"
+  read ANS
   case "$ANS" in
-  (y*|Y*)								;;	
-  (n*|N*)	er_exit "abandoning changes" 0;			exit 0	;;
-  (*)	print "$SCRP: Invalid response: $ANS\n";	ANS=""		;;
+    (y*|Y*)
+    (n*|N*)  er_exit "abandoning changes" 0; exit 0 ;;
+    (*)	print "$SCRP: Invalid response: $ANS\n"; ANS="" ;;
   esac
 done
 
-/bin/cp $LOCK $FILE # make file production
-STS=$?
-if [ 0 != $STS ]; then er_exit "cp $LOCK failed"; exit 1; fi
+/bin/cp $LOCK $FILE             # make file production
+if [ 0 != $? ]; then er_exit "cp $LOCK failed"; exit 1; fi
 
-ACC6="UPDATE" # note update in log
+ACC6="UPDATE"                   # note update in log
 print "`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE" >>$LOGF
 
-# 1:yyyymmdd.HHMM 2:filename
+# set $1=yyyymmdd.HHMM $2=filename
 set `ls -l --time-style="+%Y%m%d.%H%M" $FILE | awk '{print $6" "$7}'`
-mv $LOCK $BKOT/$NAME.$1 # make lock the backout copy
-STS=$?
-if [ 0 != $STS ]; then er_exit "mv $BKOT/$NAME failed"; exit 1; fi
+mv $LOCK $BKOT/$NAME.$1         # make lock the backout copy
+if [ 0 != $? ]; then er_exit "mv $BKOT/$NAME failed"; exit 1; fi
 
-unset	FILE LOCK ADDR MAILSUB TEXT
-#
-# Email notification of words change
-#
+# email notification of words change
+unset FILE LOCK ADDR MAILSUB TEXT
 if [ -r "$MAIL" ]; then
-	ADDR=`/bin/grep "^$NAME:" $MAIL | $NAWK -F: '{print $2}'`
+  ADDR=`/bin/grep "^$NAME:" $MAIL | $NAWK -F: '{print $2}'`
   if [ -n "$ADDR" ]; then ALERT="$ALERT $ADDR"; fi
 fi
-if [ -e "$SUBJECT" ]; then	MAILSUB="`$SUBJECT 0 $SCRP $HOST 0 $NAME`"
-else				MAILSUB=":??:$SCRP   :$HOST :   0: $NAME:"
+if [ -e "$SUBJECT" ]; then MAILSUB="`$SUBJECT 0 $SCRP $HOST 0 $NAME`"
+else MAILSUB=":??:$SCRP   :$HOST :   0: $NAME:"
 fi
-print	"
+print "
 Sending change notification to:
 	$ALERT
 
 Enter one line text summarizing changes:
   \c"
-read	TEXT
+read TEXT
 
-print	"$TEXT" | $MAILX -s "$MAILSUB" $ALERT $WAMI
-#
-# Purge all but today's file(s) and one other copy
-#
-	cd $BKOT
+print "$TEXT" | $MAILX -s "$MAILSUB" $ALERT $WAMI
+
+# purge all but today's file(s) and one other copy
+cd $BKOT
 /usr/bin/find . -name "$NAME*" -mtime +1 | /bin/sort -r |
 while read FILE; do
   if [ -z "$LOCK" ]; then
-	LOCK=$FILE;			# skip latest
-  else	/bin/rm -f $FILE
+    LOCK=$FILE                  # skip latest
+  else
+    /bin/rm -f $FILE
   fi
 done
-	er_exit "Updated file" 0
+
+er_exit "Updated file" 0
 exit 0
+

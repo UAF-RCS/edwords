@@ -27,7 +27,7 @@ cup 0 0
 clear
 !EOFT
   unset	I
-  typset -i I=0
+  typeset -i I=0
   while [ 20 -gt I ]; do 
     I=$I+1 
     echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"

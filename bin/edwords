@@ -26,10 +26,7 @@ function clear_screen { # clear the screen
 cup 0 0
 clear
 !EOFT
-  unset	I
-  typeset -i I=0
-  while [ 20 -gt I ]; do 
-    I=$I+1 
+  for i in `/usr/bin/seq 1 10`; do
     echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
   done
 }

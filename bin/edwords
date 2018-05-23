@@ -124,8 +124,6 @@ UNLOCK="$LOCK"                  # in case of errors
 if [ 0 != $? ]; then er_exit "cannot chown $LOCK"; exit 1; fi
 
 unset ANS SUM1 SUM2 WAM8 ACC6
-typeset -L8 WAM8
-typeset -L6 ACC6
 WAM8="$WAMI"
 ACC6="$OPTS"                    # note read in log
 print "`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE" >>$LOGF

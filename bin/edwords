@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 #	edwords - view or edit an encrypted 'words' file
 ################################################################################
 unset SUDO NAWK WAMI HOST MAILX SUBJECT LGRP

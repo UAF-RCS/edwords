@@ -93,7 +93,7 @@ case "$WAMI" in
 esac
 
 MAIL=$WDIR/mail                 # email notification list
-BKOT=$WDIR/.words/backout       # keep backout copies
+BKOT=$WDIR/backout              # keep backout copies
 LOGF=$WDIR/log                  # log of reads, writes, updates
 touch $LOGF
 if [ 0 != $? ]; then er_exit "cannot write $LOGF"; exit 1; fi
@@ -107,14 +107,14 @@ case "$1" in                    # establish words name
   (*words*) NAME=$1 ;;          # as specfified
   (*) NAME=.words.$1 ;;         # pre-pend .words
 esac
-FILE=$WDIR/.words/$NAME         # establish filename
+FILE=$WDIR/$NAME                # establish filename
 if [ ! -f "$FILE" ]; then er_exit "not a file: $NAME"; exit 1; fi
 if [ ! -w "$BKOT" ]; then er_exit "cannot write $BKOT"; exit 1; fi
 
 if [ -n "$READ" ]; then
-  LOCK=$WDIR/.words/$1.$WAMI    # read-only (copy, don't lock)
+  LOCK=$WDIR/$1.$WAMI           # read-only (copy, don't lock)
 else
-  LOCK=$WDIR/.words/$1.lock     # establish lockname
+  LOCK=$WDIR/$1.lock            # establish lockname
   if [ -f "$LOCK" ]; then er_exit "locked, `ls -l $LOCK`"; exit 1; fi
 fi
 /bin/cp -p $FILE $LOCK          # create lock

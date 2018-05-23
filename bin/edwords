@@ -10,46 +10,50 @@ fi
 
 unset	SCRP LSDT WDIR LOGF MAIL BKOT 
 	SCRP="${0##*/}"
-	WDIR=/opt/edwords/etc # Establish words directory
+	WDIR=/opt/edwords/etc           # Establish words directory
 unset	READ OPTS OPTX OPTN NAME FILE LOCK UNLOCK
 	READ=default			# Default is to read words
 	OPTS=-read			# pre-set for sudo re-invocation
 unset	ALERT TRAP VIEW VIXX EDIT SUMR
 	ALERT=""			# Default update notification
 	SUMR="/usr/bin/sum -r"
-if [ ! -x "$MAILX" ]; then	echo "missing mailx" >&2;	exit 2;	fi
+if [ ! -x "$MAILX" ]; then echo "missing mailx" >&2; exit 2; fi
 
 ###############################################################################
 
-function clear_screen	# clear the screen
-{	/usr/bin/tput -S <<!EOFT
+function clear_screen { # clear the screen
+  /usr/bin/tput -S <<!EOFT
 cup 0 0
 clear
 !EOFT
-unset	I
-integer	I=0
-while  [ 20 -gt I ]; do	I=$I+1; echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"; done
+  unset	I
+  integer I=0
+  while [ 20 -gt I ]; do 
+    I=$I+1 
+    echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+  done
 }
 
 #.............................................................................
-function er_exit	# show error message & exit
-{	clear_screen
-if [ -n "$TRAP" ]; then	set "$TRAP" 4;	fi	# error trap occurred
-if [ -f "$UNLOCK" ]; then	/bin/rm -f $UNLOCK;			fi
-	echo "$SCRP: $1" >&2;
-if [ -n "$2" ]; then	exit $2
-else			exit  1
-fi
+function er_exit { # show error message & exit
+  clear_screen
+  if [ -n "$TRAP" ]; then set "$TRAP" 4; fi	# error trap occurred
+  if [ -f "$UNLOCK" ]; then /bin/rm -f $UNLOCK; fi
+  echo "$SCRP: $1" >&2;
+  if [ -n "$2" ]; then exit $2
+  else exit 1
+  fi
 }
 
 #.............................................................................
-function ex_usage	# show usage then exit
-{
-	echo "Usage: $SCRP [-read|-write] [-d directory] words-file\n" >&2
-if [ -n "$1" ]; then
-	echo "$SCRP: $1" >&2;					exit 1
-else								exit 2
-fi
+function ex_usage { # show usage then exit
+  echo -e "Usage: $SCRP [-read|-write] [-d directory] words-file\n" >&2
+  if [ -n "$1" ]; then
+    echo "$SCRP: $1" >&2
+    exit 1
+  else
+    exit 2
+  fi
 }
 
 ##############################################################################

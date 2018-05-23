@@ -27,7 +27,7 @@ cup 0 0
 clear
 !EOFT
   for i in `/usr/bin/seq 1 10`; do
-    echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    echo -e "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
   done
 }
 

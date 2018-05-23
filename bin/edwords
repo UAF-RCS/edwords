@@ -10,7 +10,7 @@ fi
 
 unset	SCRP LSDT WDIR LOGF MAIL BKOT 
 	SCRP="${0##*/}"
-	WDIR=/opt/edwords/etc           # Establish words directory
+	WDIR=/var/local/.edwords        # Establish words directory
 unset	READ OPTS OPTX OPTN NAME FILE LOCK UNLOCK
 	READ=default			# Default is to read words
 	OPTS=-read			# pre-set for sudo re-invocation

@@ -17,7 +17,7 @@ unset	READ OPTS OPTX OPTN NAME FILE LOCK UNLOCK
 unset	ALERT TRAP VIEW VIXX EDIT SUMR
 	ALERT=""			# Default update notification
 	SUMR="/usr/bin/sum -r"
-if [ ! -x "$MAILX" ]; then	print "missing mailx" >&2;	exit 2;	fi
+if [ ! -x "$MAILX" ]; then	echo "missing mailx" >&2;	exit 2;	fi
 
 ###############################################################################
 
@@ -28,7 +28,7 @@ clear
 !EOFT
 unset	I
 integer	I=0
-while  [ 20 -gt I ]; do	I=$I+1; print "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"; done
+while  [ 20 -gt I ]; do	I=$I+1; echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"; done
 }
 
 #.............................................................................
@@ -36,7 +36,7 @@ function er_exit	# show error message & exit
 {	clear_screen
 if [ -n "$TRAP" ]; then	set "$TRAP" 4;	fi	# error trap occurred
 if [ -f "$UNLOCK" ]; then	/bin/rm -f $UNLOCK;			fi
-	print "$SCRP: $1" >&2;
+	echo "$SCRP: $1" >&2;
 if [ -n "$2" ]; then	exit $2
 else			exit  1
 fi
@@ -45,9 +45,9 @@ fi
 #.............................................................................
 function ex_usage	# show usage then exit
 {
-	print "Usage: $SCRP [-read|-write] [-d directory] words-file\n" >&2
+	echo "Usage: $SCRP [-read|-write] [-d directory] words-file\n" >&2
 if [ -n "$1" ]; then
-	print "$SCRP: $1" >&2;					exit 1
+	echo "$SCRP: $1" >&2;					exit 1
 else								exit 2
 fi
 }
@@ -86,7 +86,7 @@ if [ -z "$READ" ]; then EDIT="$VIXX"; else EDIT="$VIEW"; fi
 case "$WAMI" in
   (root) ;;
   (*)
-    print "$SCRP: Re-invoking with sudo...\n"
+    echo "$SCRP: Re-invoking with sudo...\n"
     $SUDO $0 $OPTS $OPTX $1
     exit $? 
 esac
@@ -126,15 +126,15 @@ if [ 0 != $? ]; then er_exit "cannot chown $LOCK"; exit 1; fi
 unset ANS SUM1 SUM2 WAM8 ACC6
 WAM8="$WAMI"
 ACC6="$OPTS"                    # note read in log
-print "`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE" >>$LOGF
+echo "`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE" >>$LOGF
 if [ 0 != $? ]; then er_exit "log $LOGF failed"; exit 1; fi
 
 trap "TRAP=Error; er_exit" 1 2 3
 
 $EDIT $LOCK                     # edit (do the lock... a copy)
 
-SUM1="`$SUMR $FILE | $NAWK '{print $1}'`"
-SUM2="`$SUMR $LOCK | $NAWK '{print $1}'`"
+SUM1="`$SUMR $FILE | $NAWK '{echo $1}'`"
+SUM2="`$SUMR $LOCK | $NAWK '{echo $1}'`"
 if [ "$SUM1" = "$SUM2" ]; then er_exit "$NAME not changed" 0;	exit 0;	fi
 
 if [ -n "$READ" ]; then         # read requested, skip the update
@@ -144,36 +144,36 @@ fi
 
 unset ANS                       # require a valid answer
 while [ -z "$ANS" ]; do
-  print "$SCRP: Make this the production file? [y|n] \c"
+  echo "$SCRP: Make this the production file? [y|n] \c"
   read ANS
-  print ""
+  echo ""
   case "$ANS" in
     (y*|Y*)
-      print "$SCRP: invoking with 'view -x' to validate encryption key\n"
+      echo "$SCRP: invoking with 'view -x' to validate encryption key\n"
       /bin/cp -p $LOCK $LOCK.v
       if [ 0 != $? ]; then er_exit "cp $LOCK.v failed"; exit 1; fi
       $VIEW $LOCK               # validate encryption key OK
-      SUM1="`$SUMR $LOCK.v | $NAWK '{print $1}'`"
-      SUM2="`$SUMR $LOCK   | $NAWK '{print $1}'`"
+      SUM1="`$SUMR $LOCK.v | $NAWK '{echo $1}'`"
+      SUM2="`$SUMR $LOCK   | $NAWK '{echo $1}'`"
       if [ "$SUM1" != "$SUM2" ]; then
-        print "$SCRP: validation changed file...\n"
+        echo "$SCRP: validation changed file...\n"
         ANS=""
       fi
       /bin/rm -f $LOCK.v
       ;;
     (n*|N*)  er_exit "abandoning changes" 0; exit 0 ;;
-    (*)	 print "$SCRP: Invalid response: $ANS\n"; ANS="" ;;
+    (*)	 echo "$SCRP: Invalid response: $ANS\n"; ANS="" ;;
   esac
 done
 
 unset	ANS                     # make sure they really want to do this
 while [ -z "$ANS" ]; do
-  print "$SCRP: Update $NAME? [y|n] \c"
+  echo "$SCRP: Update $NAME? [y|n] \c"
   read ANS
   case "$ANS" in
     (y*|Y*)
     (n*|N*)  er_exit "abandoning changes" 0; exit 0 ;;
-    (*)	print "$SCRP: Invalid response: $ANS\n"; ANS="" ;;
+    (*)	echo "$SCRP: Invalid response: $ANS\n"; ANS="" ;;
   esac
 done
 
@@ -181,23 +181,23 @@ done
 if [ 0 != $? ]; then er_exit "cp $LOCK failed"; exit 1; fi
 
 ACC6="UPDATE"                   # note update in log
-print "`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE" >>$LOGF
+echo "`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE" >>$LOGF
 
 # set $1=yyyymmdd.HHMM $2=filename
-set `ls -l --time-style="+%Y%m%d.%H%M" $FILE | awk '{print $6" "$7}'`
+set `ls -l --time-style="+%Y%m%d.%H%M" $FILE | awk '{echo $6" "$7}'`
 mv $LOCK $BKOT/$NAME.$1         # make lock the backout copy
 if [ 0 != $? ]; then er_exit "mv $BKOT/$NAME failed"; exit 1; fi
 
 # email notification of words change
 unset FILE LOCK ADDR MAILSUB TEXT
 if [ -r "$MAIL" ]; then
-  ADDR=`/bin/grep "^$NAME:" $MAIL | $NAWK -F: '{print $2}'`
+  ADDR=`/bin/grep "^$NAME:" $MAIL | $NAWK -F: '{echo $2}'`
   if [ -n "$ADDR" ]; then ALERT="$ALERT $ADDR"; fi
 fi
 if [ -e "$SUBJECT" ]; then MAILSUB="`$SUBJECT 0 $SCRP $HOST 0 $NAME`"
 else MAILSUB=":??:$SCRP   :$HOST :   0: $NAME:"
 fi
-print "
+echo "
 Sending change notification to:
 	$ALERT
 
@@ -205,7 +205,7 @@ Enter one line text summarizing changes:
   \c"
 read TEXT
 
-print "$TEXT" | $MAILX -s "$MAILSUB" $ALERT $WAMI
+echo "$TEXT" | $MAILX -s "$MAILSUB" $ALERT $WAMI
 
 # purge all but today's file(s) and one other copy
 cd $BKOT

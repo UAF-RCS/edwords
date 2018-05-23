@@ -76,11 +76,8 @@ if [ -n "$2" ]; then ex_usage "Too many args"; exit 1; fi
 if [ ! -d "$WDIR" ]; then er_exit "$WDIR not found"; exit 1; fi
 if [ -z "$WAMI" ]; then er_exit "missing whoami"; exit 1; fi
 
-case "$HOST" in
-  (admin1) VIEW="/usr/bin/rvim -x -M"; VIXX="/usr/bin/rvim -x" ;;
-  (*) er_exit "do not know $HOST"; exit 1 ;;
-esac
-
+VIEW="/usr/bin/rvim -x -M"
+VIXX="/usr/bin/rvim -x"
 if [ -z "$READ" ]; then EDIT="$VIXX"; else EDIT="$VIEW"; fi
 
 case "$WAMI" in
@@ -116,16 +113,16 @@ else
   LOCK=$WDIR/$1.lock            # establish lockname
   if [ -f "$LOCK" ]; then er_exit "locked, `ls -l $LOCK`"; exit 1; fi
 fi
+UNLOCK="$LOCK"                  # in case of errors
 /bin/cp -p $FILE $LOCK          # create lock
 if [ 0 != $? ]; then er_exit "cp $LOCK failed"; exit 1; fi
-UNLOCK="$LOCK"                  # in case of errors
-
 /bin/chown $WAMI:$LGRP $LOCK    # stamp lock
 if [ 0 != $? ]; then er_exit "cannot chown $LOCK"; exit 1; fi
 
 unset ANS SUM1 SUM2 WAM8 ACC6
 WAM8="$WAMI"
-ACC6="$OPTS"                    # note read in log
+ACC6="$OPTS"
+# note read in log
 echo "`date +%Y-%m-%d.%H:%M:%S` $WAM8 $ACC6 $FILE" >>$LOGF
 if [ 0 != $? ]; then er_exit "log $LOGF failed"; exit 1; fi
 

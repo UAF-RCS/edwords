@@ -130,8 +130,8 @@ trap "TRAP=Error; er_exit" 1 2 3
 
 $EDIT $LOCK                     # edit (do the lock... a copy)
 
-SUM1="`$SUMR $FILE | $NAWK '{echo $1}'`"
-SUM2="`$SUMR $LOCK | $NAWK '{echo $1}'`"
+SUM1="`$SUMR $FILE | $NAWK '{print $1}'`"
+SUM2="`$SUMR $LOCK | $NAWK '{print $1}'`"
 if [ "$SUM1" = "$SUM2" ]; then er_exit "$NAME not changed" 0;	exit 0;	fi
 
 if [ -n "$READ" ]; then         # read requested, skip the update
@@ -150,8 +150,8 @@ while [ -z "$ANS" ]; do
       /bin/cp -p $LOCK $LOCK.v
       if [ 0 != $? ]; then er_exit "cp $LOCK.v failed"; exit 1; fi
       $VIEW $LOCK               # validate encryption key OK
-      SUM1="`$SUMR $LOCK.v | $NAWK '{echo $1}'`"
-      SUM2="`$SUMR $LOCK   | $NAWK '{echo $1}'`"
+      SUM1="`$SUMR $LOCK.v | $NAWK '{print $1}'`"
+      SUM2="`$SUMR $LOCK   | $NAWK '{print $1}'`"
       if [ "$SUM1" != "$SUM2" ]; then
         echo -e "$SCRP: validation changed file...\n"
         ANS=""
